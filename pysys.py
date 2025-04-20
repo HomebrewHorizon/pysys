@@ -9,24 +9,30 @@ class PySys:
         self.version = self.get_version()
 
     def get_version(self):
-        """ Reads the current version from version.txt """
+        """ Reads the current version from version.txt or throws an error if missing """
         if os.path.exists("version.txt"):
             with open("version.txt", "r") as f:
                 return f.read().strip()
+        print("Error: version.txt not found! Creating default version.")
+        with open("version.txt", "w") as f:
+            f.write("0.4demo")
         return "0.4demo"
 
     def update_version(self):
         """ Updates PySys version automatically """
-        current_version = float(self.version.replace("demo", "").strip())
-        next_version = current_version + 0.1
-        if next_version >= 1.0:
-            next_version = "1.0-beta"
+        try:
+            current_version = float(self.version.replace("demo", "").strip())
+            next_version = current_version + 0.1
+            if next_version >= 1.0:
+                next_version = "1.0-beta"
 
-        with open("version.txt", "w") as f:
-            f.write(str(next_version))
+            with open("version.txt", "w") as f:
+                f.write(str(next_version))
 
-        self.version = str(next_version)
-        print(f"System updated to PySys v{self.version}!")
+            self.version = str(next_version)
+            print(f"System updated to PySys v{self.version}!")
+        except ValueError:
+            print("Error: Invalid version format in version.txt")
 
     def start(self):
         print(f"PySys v{self.version}")
@@ -148,7 +154,6 @@ class PySys:
             print(f"Error: Metadata file missing for package '{package_name}'.")
             return
 
-        # Load package metadata
         tree = ET.parse(metadata_file)
         root = tree.getroot()
         package_name = root.find("name").text
@@ -188,7 +193,6 @@ class PySys:
             print("Error: OBN Package is not enabled. Use 'pysys set obn true' first.")
             return
 
-        # Load package metadata
         tree = ET.parse(metadata_file)
         root = tree.getroot()
         package_name = root.find("name").text
@@ -202,26 +206,6 @@ class PySys:
             print("Warning: No install.py script found, dependencies may not be auto-installed.")
 
         print("Package installation complete!")
-
-    # HELP COMMAND
-    def show_help(self):
-        print("Available commands:")
-        print(" - pysys file new <filename>")
-        print(" - pysys file edit <filename>")
-        print(" - pysys run <script.py>")
-        print(" - pysys restart")
-        print(" - pysys load <resource>")
-        print(" - pysys status")
-        print(" - pysys check")
-        print(" - pysys log")
-        print(" - pysys config")
-        print(" - pysys update")
-        print(" - pysys remove <package>")
-        print(" - pysys install pkg <PkgName> obn false")
-        print(" - pysys clean")
-        print(" - pysys set obn <true/false>")
-        print(" - pysys obn pkg <package>")
-        print(" - pysys help")
 
 # Run PySys
 if __name__ == "__main__":
