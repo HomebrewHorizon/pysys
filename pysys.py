@@ -87,125 +87,83 @@ class PySys:
             elif command.startswith("pysys obn pkg "):
                 package = command.replace("pysys obn pkg ", "").strip()
                 self.install_obn_package(package)
+            elif command.lower() == "pysys obn list":
+                self.list_obn_packages()
+            elif command.startswith("pysys obn remove "):
+                package = command.replace("pysys obn remove ", "").strip()
+                self.remove_obn_package(package)
+            elif command.startswith("pysys obn update "):
+                package = command.replace("pysys obn update ", "").strip()
+                self.update_obn_package(package)
+            elif command.lower() == "pysys obn reset":
+                self.reset_obn()
+            elif command.lower() == "pysys obn check":
+                self.check_obn_integrity()
+            elif command.lower() == "pysys obn scan":
+                self.scan_obn_updates()
             elif command.lower() == "pysys help":
                 self.show_help()
             else:
                 print(f"Unknown command: {command}")
 
-    # FILE MANAGEMENT FUNCTIONS
-    def create_file(self, filename):
-        if not filename:
-            print("Error 700-7000: FileName cannot be empty")
-            return
-        print(f"Creating file: {filename}")
-        with open(filename, "w") as f:
-            f.write("")
-        print("File created successfully.")
+    # OBN PACKAGE COMMANDS
+    def list_obn_packages(self):
+        print("Listing installed OBN packages...")
+        # Mock implementation
+        installed_packages = ["nds-src", "sys-utils", "net-manager"]
+        for pkg in installed_packages:
+            print(f" - {pkg}")
 
-    def edit_file(self, filename):
-        print(f"Opening file for editing: {filename}")
-
-    # SYSTEM COMMANDS
-    def run_script(self, script):
-        print(f"Executing script: {script}")
-
-    def restart_system(self):
-        print("Restarting system...")
-        time.sleep(2)
-        print("System restarted successfully.")
-
-    def load_resource(self, resource):
-        print(f"Loading: {resource}")
-
-    def system_status(self):
-        print("Checking system status...")
-        time.sleep(1)
-        print("System is running normally.")
-
-    def system_check(self):
-        print("Running diagnostics...")
-        time.sleep(2)
-        print("No issues found.")
-
-    def view_logs(self):
-        print("Displaying logs...")
-
-    def view_config(self):
-        print("Opening system configuration...")
-
-    def clean_temp_files(self):
-        print("Cleaning temporary files...")
-        time.sleep(2)
-        print("Cleanup complete.")
-
-    # PACKAGE MANAGEMENT
-    def remove_package(self, package):
-        print(f"Removing package: {package}")
+    def remove_obn_package(self, package):
+        print(f"Removing OBN package: {package}")
         time.sleep(2)
         print(f"Package {package} removed successfully.")
 
-    def install_pysys_package(self, package_name):
-        package_path = f"pysys_packages/{package_name}"
-        
-        metadata_file = f"{package_path}/metadata.xml"
-        install_script = f"{package_path}/install.py"
+    def update_obn_package(self, package):
+        print(f"Updating OBN package: {package}")
+        time.sleep(2)
+        print(f"{package} updated successfully.")
 
-        if not os.path.exists(metadata_file):
-            print(f"Error: Metadata file missing for package '{package_name}'.")
-            return
+    def reset_obn(self):
+        print("Resetting all OBN package settings...")
+        time.sleep(2)
+        print("OBN settings reset successfully.")
 
-        tree = ET.parse(metadata_file)
-        root = tree.getroot()
-        package_name = root.find("name").text
-        version = root.find("version").text
+    def check_obn_integrity(self):
+        print("Checking OBN package integrity...")
+        time.sleep(2)
+        print("All OBN packages verified successfully.")
 
-        print(f"Installing {package_name} v{version} via PySys-branded package system...")
+    def scan_obn_updates(self):
+        print("Scanning for OBN package updates...")
+        time.sleep(2)
+        print("Available updates: nds-src v1.1, net-manager v2.3")
 
-        if os.path.exists(install_script):
-            subprocess.run(["python", install_script])
-        else:
-            print("Warning: No install.py script found, dependencies may not be auto-installed.")
-
-        print("Package installation complete!")
-
-    # OBN PACKAGE MANAGEMENT
-    def set_obn_status(self, status):
-        if status.lower() == "true":
-            self.obn_enabled = True
-            print("OBN Package enabled.")
-        elif status.lower() == "false":
-            self.obn_enabled = False
-            print("OBN Package disabled.")
-        else:
-            print("Error: Invalid value. Use 'pysys set obn true' or 'pysys set obn false'.")
-
-    def install_obn_package(self, package_name):
-        package_path = f"obn_packages/{package_name}"
-        
-        metadata_file = f"{package_path}/metadata.xml"
-        install_script = f"{package_path}/install.py"
-
-        if not os.path.exists(metadata_file):
-            print(f"Error: Metadata file missing for package '{package_name}'.")
-            return
-
-        if not self.obn_enabled:
-            print("Error: OBN Package is not enabled. Use 'pysys set obn true' first.")
-            return
-
-        tree = ET.parse(metadata_file)
-        root = tree.getroot()
-        package_name = root.find("name").text
-        version = root.find("version").text
-
-        print(f"Installing {package_name} v{version} via OBN Package...")
-
-        if os.path.exists(install_script):
-            subprocess.run(["python", install_script])
-        else:
-            print("Warning: No install.py script found, dependencies may not be auto-installed.")
-
-        print("Package installation complete!")
+    # HELP COMMAND
+    def show_help(self):
+        print("Available commands:")
+        print(" - pysys file new <filename>")
+        print(" - pysys file edit <filename>")
+        print(" - pysys run <script.py>")
+        print(" - pysys restart")
+        print(" - pysys load <resource>")
+        print(" - pysys status")
+        print(" - pysys check")
+        print(" - pysys log")
+        print(" - pysys config")
+        print(" - pysys update")
+        print(" - pysys remove <package>")
+        print(" - pysys install pkg <PkgName> obn false")
+        print(" - pysys clean")
+        print(" - pysys set obn <true/false>")
+        print(" - pysys obn pkg <package>")
+        print(" - pysys obn list")
+        print(" - pysys obn remove <package>")
+        print(" - pysys obn update <package>")
+        print(" - pysys obn reset")
+        print(" - pysys obn check")
+        print(" - pysys obn scan")
+        print(" - pysys help")
 
 # Run PySys
 if __name__ == "__main__":
