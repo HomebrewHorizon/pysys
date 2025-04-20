@@ -5,9 +5,9 @@ class PySys:
         self.obn_enabled = False
 
     def start(self):
-        print("PySys v0.2demo")
+        print("PySys v0.3demo")
         print('Use "pysys help" for a list of commands.')
-        print("Starting PySys... (1 to 5 seconds)")
+        print("Starting PySys...")
         time.sleep(2)  # Simulating startup delay
         self.command_loop()
 
