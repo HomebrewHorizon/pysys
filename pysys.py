@@ -1,7 +1,7 @@
 import os
-import xml.etree.ElementTree as ET
-import subprocess
 import time
+import subprocess
+import yaml
 
 class PySys:
     def __init__(self):
@@ -65,20 +65,20 @@ class PySys:
                 self.system_check()
             elif command.lower() == "pysys log":
                 self.view_logs()
-            elif command.lower() == "pysys config":
-                self.view_config()
+            elif command.startswith("pysys config apply "):
+                config_file = command.replace("pysys config apply ", "").strip()
+                self.apply_config(config_file)
+            elif command.startswith("pysys config stop "):
+                config_file = command.replace("pysys config stop ", "").strip()
+                self.stop_config(config_file)
             elif command.lower() == "pysys update":
                 self.update_version()
             elif command.startswith("pysys remove "):
                 package = command.replace("pysys remove ", "").strip()
                 self.remove_package(package)
             elif command.startswith("pysys install pkg "):
-                parts = command.split(" ")
-                if len(parts) == 5 and parts[3] == "obn" and parts[4] == "false":
-                    package_name = parts[2]
-                    self.install_pysys_package(package_name)
-                else:
-                    print("Invalid syntax. Use: pysys install pkg <PkgName> obn false")
+                package = command.replace("pysys install pkg ", "").strip()
+                self.install_pysys_package(package)
             elif command.lower() == "pysys clean":
                 self.clean_temp_files()
             elif command.startswith("pysys set obn "):
@@ -106,23 +106,44 @@ class PySys:
             else:
                 print(f"Unknown command: {command}")
 
-    # OBN PACKAGE COMMANDS
-    def list_obn_packages(self):
-        print("Listing installed OBN packages...")
-        # Mock implementation
-        installed_packages = ["nds-src", "sys-utils", "net-manager"]
-        for pkg in installed_packages:
-            print(f" - {pkg}")
+    def apply_config(self, config_file):
+        """ Applies settings from a configuration file """
+        if os.path.exists(config_file):
+            with open(config_file, "r") as f:
+                try:
+                    config_data = yaml.safe_load(f)
+                    print(f"Applying configuration: {config_file}")
+                    print(config_data)  # Mock applying config
+                    time.sleep(2)
+                    print("Configuration applied successfully.")
+                except yaml.YAMLError as e:
+                    print(f"Error parsing config file: {e}")
+        else:
+            print(f"Error: Configuration file '{config_file}' not found.")
+
+    def stop_config(self, config_file):
+        """ Stops configuration settings from a given file """
+        if os.path.exists(config_file):
+            print(f"Stopping configuration: {config_file}")
+            time.sleep(2)
+            print("Configuration settings disabled successfully.")
+        else:
+            print(f"Error: Configuration file '{config_file}' not found.")
+
+    def install_obn_package(self, package):
+        print(f"Installing OBN package: {package}")
+        time.sleep(2)
+        print(f"Package '{package}' installed successfully.")
 
     def remove_obn_package(self, package):
         print(f"Removing OBN package: {package}")
         time.sleep(2)
-        print(f"Package {package} removed successfully.")
+        print(f"Package '{package}' removed successfully.")
 
     def update_obn_package(self, package):
         print(f"Updating OBN package: {package}")
         time.sleep(2)
-        print(f"{package} updated successfully.")
+        print(f"Package '{package}' updated successfully.")
 
     def reset_obn(self):
         print("Resetting all OBN package settings...")
@@ -139,7 +160,6 @@ class PySys:
         time.sleep(2)
         print("Available updates: nds-src v1.1, net-manager v2.3")
 
-    # HELP COMMAND
     def show_help(self):
         print("Available commands:")
         print(" - pysys file new <filename>")
@@ -150,10 +170,10 @@ class PySys:
         print(" - pysys status")
         print(" - pysys check")
         print(" - pysys log")
-        print(" - pysys config")
+        print(" - pysys config apply/stop <config.yml>")
         print(" - pysys update")
         print(" - pysys remove <package>")
-        print(" - pysys install pkg <PkgName> obn false")
+        print(" - pysys install pkg <PkgName>")
         print(" - pysys clean")
         print(" - pysys set obn <true/false>")
         print(" - pysys obn pkg <package>")
