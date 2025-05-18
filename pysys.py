@@ -1,119 +1,197 @@
-import argparse
 import os
+import platform
+import datetime
 import subprocess
-import sys
-import shutil
+import readline
 
-def list_files(args):
-    """Lists files in the specified directory or current directory if not specified."""
-    path = args.path if args.path else "."
+# List of built-in commands for tab-completion
+COMMANDS = ['help', 'exit', 'clear', 'sysinfo', 'date', 'ls', 'pwd', 'mkdir', 'rmdir', 'history', 'calc']
+
+def completer(text, state):
+    """Suggest and complete built-in commands based on user input."""
+    options = [cmd for cmd in COMMANDS if cmd.startswith(text)]
+    if state < len(options):
+        return options[state]
+    else:
+        return None
+
+# Setup tab-completion for built-in commands
+readline.set_completer(completer)
+readline.parse_and_bind("tab: complete")
+
+# Use a history file to store command history between sessions.
+HISTORY_FILE = "pysys_history.txt"
+try:
+    readline.read_history_file(HISTORY_FILE)
+except FileNotFoundError:
+    pass
+
+def clear_screen():
+    """Clear the terminal screen based on the operating system."""
+    if os.name == 'nt':  # Windows
+        os.system('cls')
+    else:  # Unix/Linux/MacOS
+        os.system('clear')
+
+def get_sys_info():
+    """Return a string with detailed information about the system."""
+    info = [
+        f"System        : {platform.system()}",
+        f"Node Name     : {platform.node()}",
+        f"Release       : {platform.release()}",
+        f"Version       : {platform.version()}",
+        f"Machine       : {platform.machine()}",
+        f"Processor     : {platform.processor()}",
+        f"Python Version: {platform.python_version()}"
+    ]
+    return "\n".join(info)
+
+def print_help():
+    """Display help message listing all available commands."""
+    help_text = """
+Available commands:
+  help       - Show this help message.
+  exit       - Exit pysys.
+  clear      - Clear the terminal screen.
+  sysinfo    - Display system information.
+  date       - Display the current date and time.
+  ls         - List files in the current directory.
+  pwd        - Display current working directory.
+  mkdir      - Create a new directory. Usage: mkdir <directory_name>
+  rmdir      - Remove a directory. Usage: rmdir <directory_name>
+  history    - Display the command history.
+  calc       - Evaluate a simple arithmetic expression. Usage: calc <expression>
+  
+Any command not recognized as a built-in is passed to the operating system shell.
+    """
+    print(help_text)
+
+def show_date():
+    """Print the current date and time."""
+    now = datetime.datetime.now()
+    print(now.strftime("%Y-%m-%d %H:%M:%S"))
+
+def execute_external_command(command):
+    """Pass non-built-in commands to the system shell."""
     try:
-        files = os.listdir(path)
-        print("\n".join(files))
-    except FileNotFoundError:
-        print(f"Error: Directory '{path}' not found.")
-
-def show_system_info(args):
-    """Displays basic system information."""
-    try:
-        subprocess.run(["uname", "-a"])
-    except FileNotFoundError:
-        print("Error: 'uname' command not available on this system.")
-
-def current_directory(args):
-    """Displays the current working directory."""
-    print(os.getcwd())
-
-def execute_command(args):
-    """Executes a system command."""
-    try:
-        subprocess.run(args.command, shell=True)
+        subprocess.run(command, shell=True)
     except Exception as e:
-        print(f"Error executing command: {e}")
+        print("Error executing command:", e)
 
-def install_package(args):
-    """Installs a Python package from pip or GitHub."""
-    if args.source == "pip":
-        try:
-            subprocess.run([sys.executable, "-m", "pip", "install", args.package])
-        except Exception as e:
-            print(f"Error installing package via pip: {e}")
-    elif args.source == "github":
-        repo_url = "repo-link"  # Replace with actual repository URL
-        clone_path = os.path.join(os.getcwd(), args.package)
-        try:
-            subprocess.run(["git", "clone", repo_url, clone_path])
-            os.chdir(clone_path)
-            subprocess.run([sys.executable, "-m", "pip", "install", "."])
-        except Exception as e:
-            print(f"Error cloning or installing package from GitHub: {e}")
-    else:
-        print("Invalid source. Use 'pip' or 'github'.")
+def list_directory():
+    """List files and directories in the current working directory."""
+    try:
+        files = os.listdir('.')
+        for f in files:
+            print(f)
+    except Exception as e:
+        print("Error listing directory:", e)
 
-def uninstall_package(args):
-    """Uninstalls a Python package from pip or removes a GitHub-cloned package."""
-    if args.source == "pip":
-        try:
-            subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", args.package])
-        except Exception as e:
-            print(f"Error uninstalling package via pip: {e}")
-    elif args.source == "github":
-        package_path = os.path.join(os.getcwd(), args.package)
-        try:
-            if os.path.exists(package_path):
-                shutil.rmtree(package_path)
-                print(f"Successfully removed '{args.package}' from system.")
-            else:
-                print(f"Error: '{args.package}' not found.")
-        except Exception as e:
-            print(f"Error removing package: {e}")
+def print_pwd():
+    """Print the current working directory."""
+    try:
+        print(os.getcwd())
+    except Exception as e:
+        print("Error retrieving current directory:", e)
+
+def make_directory(args):
+    """Create a directory. Usage: mkdir <directory_name>"""
+    if len(args) < 2:
+        print("Usage: mkdir <directory_name>")
     else:
-        print("Invalid source. Use 'pip' or 'github'.")
+        try:
+            os.mkdir(args[1])
+            print(f"Directory '{args[1]}' created.")
+        except Exception as e:
+            print("Error creating directory:", e)
+
+def remove_directory(args):
+    """Remove a directory. Usage: rmdir <directory_name>"""
+    if len(args) < 2:
+        print("Usage: rmdir <directory_name>")
+    else:
+        try:
+            os.rmdir(args[1])
+            print(f"Directory '{args[1]}' removed.")
+        except Exception as e:
+            print("Error removing directory:", e)
+
+def show_history():
+    """Display the list of commands entered during the session."""
+    history_length = readline.get_current_history_length()
+    for i in range(1, history_length + 1):
+        print(f"{i}: {readline.get_history_item(i)}")
+
+def calculate_expression(args):
+    """Evaluate a simple arithmetic expression provided by the user.
+    
+    Usage: calc <expression>
+    """
+    if len(args) < 2:
+        print("Usage: calc <expression>")
+    else:
+        expr = " ".join(args[1:])
+        try:
+            # Evaluate in a restricted namespace for safety reasons.
+            result = eval(expr, {"__builtins__": None}, {})
+            print(result)
+        except Exception as e:
+            print("Error evaluating expression:", e)
 
 def main():
-    parser = argparse.ArgumentParser(description="PySys - A simple system command CLI")
-    subparsers = parser.add_subparsers(dest="command")
+    # Boot banner as requested
+    print("PythonSystem [0.1.0.00000]")
+    print("2025 HomebrewHorizon\n")
+    
+    while True:
+        try:
+            user_input = input("pysys> ").strip()
+            if not user_input:
+                continue
+            
+            # Add command to history for up-arrow recall
+            readline.add_history(user_input)
+            
+            # Split input into command parts
+            parts = user_input.split()
+            command = parts[0].lower()
+            
+            # Check for built-in commands
+            if command == "exit":
+                print("Exiting pysys. Goodbye!")
+                break
+            elif command == "help":
+                print_help()
+            elif command == "clear":
+                clear_screen()
+            elif command == "sysinfo":
+                print(get_sys_info())
+            elif command == "date":
+                show_date()
+            elif command == "ls":
+                list_directory()
+            elif command == "pwd":
+                print_pwd()
+            elif command == "mkdir":
+                make_directory(parts)
+            elif command == "rmdir":
+                remove_directory(parts)
+            elif command == "history":
+                show_history()
+            elif command == "calc":
+                calculate_expression(parts)
+            else:
+                # Fall back to system shell execution
+                execute_external_command(user_input)
+        except KeyboardInterrupt:
+            print("\nTerminated by user. Exiting pysys.")
+            break
 
-    # 'pyls' command
-    ls_parser = subparsers.add_parser("pyls", help="List files in a directory")
-    ls_parser.add_argument("path", nargs="?", default=".", help="Path of the directory")
-
-    # 'pysysinfo' command
-    sysinfo_parser = subparsers.add_parser("pysysinfo", help="Show system information")
-
-    # 'pypwd' command
-    pwd_parser = subparsers.add_parser("pypwd", help="Show current directory")
-
-    # 'pyexec' command
-    exec_parser = subparsers.add_parser("pyexec", help="Execute a system command")
-    exec_parser.add_argument("command", help="Command to execute")
-
-    # 'pyinstall' command
-    install_parser = subparsers.add_parser("pyinstall", help="Install a Python package")
-    install_parser.add_argument("package", help="Name of the package to install")
-    install_parser.add_argument("source", choices=["pip", "github"], help="Installation source: 'pip' or 'github'")
-
-    # 'pyuninstall' command
-    uninstall_parser = subparsers.add_parser("pyuninstall", help="Uninstall a Python package")
-    uninstall_parser.add_argument("package", help="Name of the package to uninstall")
-    uninstall_parser.add_argument("source", choices=["pip", "github"], help="Uninstallation source: 'pip' or 'github'")
-
-    args = parser.parse_args()
-
-    if args.command == "pyls":
-        list_files(args)
-    elif args.command == "pysysinfo":
-        show_system_info(args)
-    elif args.command == "pypwd":
-        current_directory(args)
-    elif args.command == "pyexec":
-        execute_command(args)
-    elif args.command == "pyinstall":
-        install_package(args)
-    elif args.command == "pyuninstall":
-        uninstall_package(args)
-    else:
-        parser.print_help()
+    # On exit, save the history so that it is available next time.
+    try:
+        readline.write_history_file(HISTORY_FILE)
+    except Exception as e:
+        print("Error saving history:", e)
 
 if __name__ == "__main__":
     main()
